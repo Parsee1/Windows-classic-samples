@@ -1,0 +1,26 @@
+name: Build AudioClip
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build AudioClip
+        shell: cmd
+        run: |
+          msbuild "Samples\Win7Samples\multimedia\mediafoundation\AudioClip\AudioClip.sln" /m /p:Configuration=Release /p:Platform=Win32
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioClip-Windows
+          path: |
+            Samples/Win7Samples/multimedia/mediafoundation/AudioClip/**/Release/*.exe
+            Samples/Win7Samples/multimedia/mediafoundation/AudioClip/Release/*.exe
+          if-no-files-found: error
