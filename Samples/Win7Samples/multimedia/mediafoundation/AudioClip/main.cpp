@@ -65,7 +65,7 @@ int wmain(int argc, wchar_t* argv[])
     const WCHAR *wszSourceFile = argv[1];
     const WCHAR *wszTargetFile = argv[2];
     
-    const LONG MAX_AUDIO_DURATION_MSEC = 5000; // 5 seconds
+    const LONG MAX_AUDIO_DURATION_MSEC = 7200000; // 2 hours
 
     HRESULT hr = S_OK;
 
