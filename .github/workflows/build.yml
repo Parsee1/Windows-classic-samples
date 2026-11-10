@@ -18,6 +18,24 @@ jobs:
         run: |
           $dir = "Samples\Win7Samples\multimedia\mediafoundation\AudioClip"
           $sln = Join-Path $dir "AudioClip.sln"
+          $vcproj = Join-Path $dir "AudioClip.vcproj"
+
+          if (!(Test-Path $vcproj)) {
+              throw "找不到 AudioClip.vcproj"
+          }
+          
+          $encoding = [System.Text.Encoding]::GetEncoding(1252)
+          $content = [System.IO.File]::ReadAllText($vcproj, $encoding)
+          
+          $count = ([regex]::Matches($content, 'WarnAsError="true"')).Count
+          if ($count -ne 4) {
+              throw "预期找到4处 WarnAsError=true，实际找到 $count 处"
+          }
+          
+          $content = $content -replace 'WarnAsError="true"', 'WarnAsError="false"'
+          [System.IO.File]::WriteAllText($vcproj, $content, $encoding)
+          
+          Write-Host "已关闭旧项目的警告升级错误设置"
 
           if (!(Test-Path $sln)) {
             throw "找不到 AudioClip.sln：$sln"
@@ -47,7 +65,7 @@ jobs:
         run: |
           $sln = "Samples\Win7Samples\multimedia\mediafoundation\AudioClip\AudioClip.sln"
 
-          msbuild $sln /m /p:Configuration=Release /p:Platform=Win32 /p:ClTreatWarningAsError=false
+          msbuild $sln /m /p:Configuration=Release /p:Platform=Win32
 
           if ($LASTEXITCODE -ne 0) {
             throw "AudioClip 编译失败"
