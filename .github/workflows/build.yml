@@ -1,3 +1,4 @@
+
 name: Build AudioClip
 
 on:
@@ -6,21 +7,57 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: microsoft/setup-msbuild@v2
 
-      - name: Build AudioClip
-        shell: cmd
+      - name: Upgrade legacy Visual Studio project
+        shell: pwsh
         run: |
-          msbuild "Samples\Win7Samples\multimedia\mediafoundation\AudioClip\AudioClip.sln" /m /p:Configuration=Release /p:Platform=Win32
+          $dir = "Samples\Win7Samples\multimedia\mediafoundation\AudioClip"
+          $sln = Join-Path $dir "AudioClip.sln"
+
+          if (!(Test-Path $sln)) {
+            throw "找不到 AudioClip.sln：$sln"
+          }
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products '*' -property installationPath
+
+          if (!$vs) {
+            throw "找不到 Visual Studio"
+          }
+
+          $devenv = Join-Path $vs "Common7\IDE\devenv.com"
+
+          if (!(Test-Path $devenv)) {
+            throw "找不到 devenv.com：$devenv"
+          }
+
+          & $devenv $sln /Upgrade
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "旧项目升级失败"
+          }
+
+      - name: Build AudioClip
+        shell: pwsh
+        run: |
+          $sln = "Samples\Win7Samples\multimedia\mediafoundation\AudioClip\AudioClip.sln"
+
+          msbuild $sln /m /p:Configuration=Release /p:Platform=Win32
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "AudioClip 编译失败"
+          }
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: AudioClip-Windows
           path: |
-            Samples/Win7Samples/multimedia/mediafoundation/AudioClip/**/Release/*.exe
-            Samples/Win7Samples/multimedia/mediafoundation/AudioClip/Release/*.exe
+            Samples/Win7Samples/multimedia/mediafoundation/AudioClip/Release/AudioClip.exe
+            Samples/Win7Samples/multimedia/mediafoundation/AudioClip/**/Release/AudioClip.exe
           if-no-files-found: error
